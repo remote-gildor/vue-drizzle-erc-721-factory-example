@@ -25,14 +25,16 @@ contract("ShapeFactory", accounts => {
     it("creates a new Shape contract (SQR)", async () => {
       let result = await instance.addNewShape("square", "SQR", ether(1.2));
 
-      // gas used: 3,059,947 gas
+      // gas used (mapping): 3,059,947 gas
+      // gas used (array): 3,080,344 gas
       console.log("Gas used: " + result.receipt.gasUsed);
     });
 
     it("creates another Shape contract (CRC)", async () => {
       let result = await instance.addNewShape("circle", "CRC", ether(0.5));
 
-      // gas used: 3,059,947 gas
+      // gas used (mapping): 3,059,947 gas
+      // gas used (array): 3,074,097 gas
       console.log("Gas used: " + result.receipt.gasUsed);
     });
 

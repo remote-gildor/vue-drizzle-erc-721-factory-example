@@ -6,28 +6,34 @@ import '@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
 contract ShapeFactory is Ownable {
-  // mapping: symbol to shape pointer
-  mapping (string => Shape) shapes;
-
-  string[] shapeSymbols;
+  Shape[] shapes;
 
   function addNewShape(string memory _name, string memory _symbol, uint _price) public onlyOwner {
+    Shape someShape = getShapeBySymbol(_symbol);
+
     // check if shape address is not null
-    if (address(shapes[_symbol]) != address(0)) {
+    if (address(someShape) != address(0)) {
       // if not null, check if shape is active
-      if (shapes[_symbol].isActive()) {
+      if (someShape.isActive()) {
         revert("A ShapeType with this symbol already exists.");
       } else {
         // reactivate the shape
-        shapes[_symbol].reactivateShape();
+        someShape.reactivateShape();
         return;
       }
     }
 
     // if shape address in mapping is null, it doesn't exist yet, so create a new shape
     Shape shape = new Shape(_name, _symbol, _price);
-    shapes[_symbol] = shape;
-    shapeSymbols.push(_symbol);
+    shapes.push(shape);
+  }
+
+  function getShapeBySymbol(string memory _symbol) internal view returns (Shape) {
+    for (uint i = 0; i < shapes.length; i++) {
+      if (keccak256(abi.encodePacked(shapes[i].symbol())) == keccak256(abi.encodePacked(_symbol))) {
+        return shapes[i];
+      }
+    }
   }
 }
 
