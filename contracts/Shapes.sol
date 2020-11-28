@@ -35,6 +35,10 @@ contract ShapeFactory is Ownable {
   function getShapeSymbolByIndex(uint _index) public view returns (string memory) {
     return shapeSymbols[_index];
   }
+
+  function getShapeAddressBySymbol(string memory _symbol) public view returns (address) {
+    return address(shapes[_symbol]);
+  }
 }
 
 contract Shape is ERC721, ERC721Burnable, Ownable {

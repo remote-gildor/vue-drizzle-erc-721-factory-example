@@ -7,6 +7,8 @@ const {
 
 const { assert } = require("chai");
 
+let fs = require('fs');
+
 // helper
 const ether = (n) => web3.utils.toWei(n.toString(), 'ether');
 
@@ -62,6 +64,43 @@ contract("Shapes", accounts => {
         instance.getShapeSymbolByIndex(2), // out of bounds
         "invalid opcode"
       )
+    });
+
+    it("mints a new SQR token", async () => {
+      let addressSQR = await instance.getShapeAddressBySymbol("SQR");
+      assert.isTrue(web3.utils.isAddress(addressSQR));
+      assert.notEqual(addressSQR, 0x0000000000000000000000000000000000000000);
+
+      // get the Shape ABI
+      let data = fs.readFileSync("../vapp/src/contracts/Shape.json");
+      let shapeJson = JSON.parse(data);
+      
+      // fetch the Shape contract
+      let sqrInstance = new web3.eth.Contract(shapeJson.abi, addressSQR);
+
+      // sanity check - shape name
+      let name = await sqrInstance.methods.name().call();
+      assert.equal(name, "square");
+
+      // check current balance of the user
+      let balanceBefore = await sqrInstance.methods.balanceOf(accounts[0]).call();
+      assert.equal(balanceBefore, 0);
+
+      // mint an SQR token
+      let result = await sqrInstance.methods.mint(
+        web3.utils.hexToBytes("0x0000000000000000000000000000000000000000")
+      ).send({
+        from: accounts[0],
+        gas: 300000,
+        value: ether(1.2)
+      });
+
+      // gas used: 178326
+      // console.log("Gas used (mint): " + result.gasUsed);
+
+      // check current balance of the user
+      let balanceAfter = await sqrInstance.methods.balanceOf(accounts[0]).call();
+      assert.equal(balanceAfter, 1);
     });
 
   });
