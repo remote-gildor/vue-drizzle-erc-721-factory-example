@@ -25,17 +25,21 @@ contract("ShapeFactory", accounts => {
     it("creates a new Shape contract (SQR)", async () => {
       let result = await instance.addNewShape("square", "SQR", ether(1.2));
 
-      // gas used (mapping): 3,059,947 gas
+      // gas used (mapping): 3,101,990 gas
       // gas used (array): 3,080,344 gas
       console.log("Gas used: " + result.receipt.gasUsed);
     });
 
     it("creates another Shape contract (CRC)", async () => {
-      let result = await instance.addNewShape("circle", "CRC", ether(0.5));
+      for (let i = 0; i < 80; i++) {
+        let result = await instance.addNewShape("circle", "CRC"+i, ether(0.5));
 
-      // gas used (mapping): 3,059,947 gas
-      // gas used (array): 3,074,097 gas
-      console.log("Gas used: " + result.receipt.gasUsed);
+        // gas used (mapping): 3,086,990 gas
+        // gas used (array): 3,074,097 gas
+        // gas used (array after 80 shapes created): 3,765,952 gas
+        console.log("Gas used: " + result.receipt.gasUsed);
+      }
+      
     });
 
   });
