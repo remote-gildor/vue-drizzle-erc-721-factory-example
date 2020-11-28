@@ -68,6 +68,9 @@ contract Shape is ERC721, ERC721Burnable, Ownable {
   }
 
   function mint(bytes memory _data) public payable {
+    // check if shape is active
+    require(active == true, "Shape is deactivated");
+
     // check if the amount paid is correct
     require(msg.value == priceWei, "Wrong amount of ETH sent.");
 

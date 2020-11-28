@@ -22,7 +22,7 @@ contract("Shapes", accounts => {
     instance = await ShapeFactory.deployed();
   });
 
-  describe("ShapeFactory", () => {
+  describe("ShapeFactory & Shape tests", () => {
 
     it("creates a new Shape contract (SQR)", async () => {
       let result = await instance.addNewShape("square", "SQR", ether(1.2));
@@ -47,6 +47,8 @@ contract("Shapes", accounts => {
       // gas used: 3,087,002 gas
       // console.log("Gas used: " + result.receipt.gasUsed);
     });
+
+    xit("checks the owner of SQR&CRC contracts is the same as of the ShapeFactory contract", async () => {});
 
     it("fetches shapeSymbols array length", async () => {
       let length = await instance.getShapeSymbolsArrayLength();
@@ -102,6 +104,26 @@ contract("Shapes", accounts => {
       let balanceAfter = await sqrInstance.methods.balanceOf(accounts[0]).call();
       assert.equal(balanceAfter, 1);
     });
+
+    xit("fetches the SQR token data (id etc.)", async () => {});
+
+    xit("mints two new CRC tokens", async () => {});
+
+    xit("burns a CRC token", async () => {});
+
+    xit("deactivates the CRC shape", async () => {});
+
+    xit("re-activates the CRC shape", async () => {});
+
+    xit("allows the owner to collect ETH from a Shape contract", async () => {});
+
+    xit("fails at minting if value paid is incorrect", async () => {});
+
+    xit("fails to burn a non-existing token (wrong ID)", async () => {});
+
+    xit("fails at trying to create an existing active shape type", async () => {});
+    
+    xit("fails at deactivating a non-existing shape type", async () => {});
 
   });
 });
