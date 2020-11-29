@@ -7,6 +7,7 @@ const {
 
 const { assert } = require("chai");
 
+const path = require('path');
 let fs = require('fs');
 
 // helper
@@ -17,9 +18,15 @@ const ShapeFactory = artifacts.require("ShapeFactory");
 
 contract("Shapes", accounts => {
   let instance;
+  let shapeData;
+  let shapeJson;
 
   beforeEach(async () => {
     instance = await ShapeFactory.deployed();
+
+    // get the Shape ABI
+    shapeData = fs.readFileSync(path.join(__dirname, "../vapp/src/contracts/Shape.json"));
+    shapeJson = JSON.parse(shapeData);
   });
 
   describe("ShapeFactory & Shape tests", () => {
@@ -72,10 +79,6 @@ contract("Shapes", accounts => {
       let addressSQR = await instance.getShapeAddressBySymbol("SQR");
       assert.isTrue(web3.utils.isAddress(addressSQR));
       assert.notEqual(addressSQR, 0x0000000000000000000000000000000000000000);
-
-      // get the Shape ABI
-      let data = fs.readFileSync("../vapp/src/contracts/Shape.json");
-      let shapeJson = JSON.parse(data);
       
       // fetch the Shape contract
       let sqrInstance = new web3.eth.Contract(shapeJson.abi, addressSQR);
@@ -97,17 +100,85 @@ contract("Shapes", accounts => {
         value: ether(1.2)
       });
 
-      // gas used: 178326
-      // console.log("Gas used (mint): " + result.gasUsed);
+      // gas used: 200024
+      // console.log("Gas used (mint SQR): " + result.gasUsed);
 
       // check current balance of the user
       let balanceAfter = await sqrInstance.methods.balanceOf(accounts[0]).call();
       assert.equal(balanceAfter, 1);
     });
 
-    xit("fetches the SQR token data (id etc.)", async () => {});
+    it("fetches the SQR token data (id etc.)", async () => {
+      let addressSQR = await instance.getShapeAddressBySymbol("SQR");
+      assert.isTrue(web3.utils.isAddress(addressSQR));
+      assert.notEqual(addressSQR, 0x0000000000000000000000000000000000000000);
+      
+      // fetch the Shape contract
+      let sqrInstance = new web3.eth.Contract(shapeJson.abi, addressSQR);
 
-    xit("mints two new CRC tokens", async () => {});
+      // Get shape name
+      let name = await sqrInstance.methods.name().call();
+      assert.equal(name, "square");
+
+      // Get shape symbol
+      let symbol = await sqrInstance.methods.symbol().call();
+      assert.equal(symbol, "SQR");
+
+      // check current SQR balance of the user
+      let balance = await sqrInstance.methods.balanceOf(accounts[0]).call();
+      assert.equal(balance, 1);
+
+      // get token ID
+      let tokenIndex = 0;
+      let tokenId = await sqrInstance.methods.tokenOfOwnerByIndex(accounts[0], tokenIndex).call();
+      assert.equal(tokenId, 1); // assert token ID is 1
+
+    });
+
+    it("mints two new CRC tokens", async () => {
+      let addressCRC = await instance.getShapeAddressBySymbol("CRC");
+      assert.isTrue(web3.utils.isAddress(addressCRC));
+      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      
+      // fetch the CRC Shape contract
+      let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
+
+      // sanity check - shape name
+      let name = await crcInstance.methods.name().call();
+      assert.equal(name, "circle");
+
+      // check current balance of the user
+      let balanceBefore = await crcInstance.methods.balanceOf(accounts[0]).call();
+      assert.equal(balanceBefore, 0);
+
+      // mint the first CRC token
+      let result1 = await crcInstance.methods.mint(
+        web3.utils.hexToBytes("0x0000000000000000000000000000000000000000")
+      ).send({
+        from: accounts[0],
+        gas: 300000,
+        value: ether(0.5)
+      });
+
+      // gas used: 200,024
+      // console.log("Gas used (mint CRC) 1: " + result1.gasUsed);
+
+      // mint the second CRC token
+      let result2 = await crcInstance.methods.mint(
+        web3.utils.hexToBytes("0x0000000000000000000000000000000000000000")
+      ).send({
+        from: accounts[0],
+        gas: 300000,
+        value: ether(0.5)
+      });
+
+      // gas used: 155,024
+      // console.log("Gas used (mint CRC) 2: " + result2.gasUsed);
+
+      // check current balance of the user
+      let balanceAfter = await crcInstance.methods.balanceOf(accounts[0]).call();
+      assert.equal(balanceAfter, 2);
+    });
 
     xit("burns a CRC token", async () => {});
 

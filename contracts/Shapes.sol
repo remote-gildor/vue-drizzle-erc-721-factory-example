@@ -74,8 +74,10 @@ contract Shape is ERC721, ERC721Burnable, Ownable {
     // check if the amount paid is correct
     require(msg.value == priceWei, "Wrong amount of ETH sent.");
 
+    lastId += 1;
+
     // mint the ERC-721 token
-    super._safeMint(msg.sender, lastId+1, _data);
+    super._safeMint(msg.sender, lastId, _data);
 
     emit TokenMinted(msg.sender, super.symbol());
   }
