@@ -63,6 +63,10 @@ contract Shape is ERC721, ERC721Burnable, Ownable {
   }
 
   // methods
+  function exists(uint256 tokenId) public view returns (bool) {
+    return super._exists(tokenId);
+  }
+
   function isActive() public view returns (bool) {
     return active;
   }

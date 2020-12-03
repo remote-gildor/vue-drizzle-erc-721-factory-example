@@ -180,7 +180,29 @@ contract("Shapes", accounts => {
       assert.equal(balanceAfter, 2);
     });
 
-    xit("burns a CRC token", async () => {});
+    it("burns a CRC token", async () => {
+      let tokenId = 1; // the first CRC token
+
+      // fetch the CRC Shape contract
+      let addressCRC = await instance.getShapeAddressBySymbol("CRC");
+      assert.isTrue(web3.utils.isAddress(addressCRC));
+      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
+
+      // sanity check - token owner
+      let tokenOwner = await crcInstance.methods.ownerOf(tokenId).call();
+      assert.equal(tokenOwner, accounts[0]);
+
+      // burn the token
+      await crcInstance.methods.burn(tokenId).send({
+        from: accounts[0],
+        gas: 300000
+      });
+
+      // check if token still exists
+      let exists = await crcInstance.methods.exists(tokenId).call();
+      assert.isFalse(exists);
+    });
 
     xit("deactivates the CRC shape", async () => {});
 
