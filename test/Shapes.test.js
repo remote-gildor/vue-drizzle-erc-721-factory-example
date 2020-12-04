@@ -55,7 +55,29 @@ contract("Shapes", accounts => {
       // console.log("Gas used: " + result.receipt.gasUsed);
     });
 
-    xit("checks the owner of SQR&CRC contracts is the same as of the ShapeFactory contract", async () => {});
+    it("checks if the owner of SQR&CRC contracts is the ShapeFactory contract", async () => {
+      // Factory contract owner
+      let factoryOwner = await instance.owner();
+      assert.equal(factoryOwner, accounts[0]);
+      //console.log("Factory owner: " + factoryOwner);
+
+      // Factory address
+      let factoryAddress = await instance.address;
+      //console.log("Factory address: " + factoryAddress);
+
+      // fetch the CRC Shape contract
+      let addressCRC = await instance.getShapeAddressBySymbol("CRC");
+      assert.isTrue(web3.utils.isAddress(addressCRC));
+      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
+
+      // check the CRC contract owner
+      let crcOwner = await crcInstance.methods.owner().call();
+      assert.equal(crcOwner, factoryAddress);
+      assert.notEqual(crcOwner, factoryOwner);
+      //console.log("CRC owner: " + crcOwner);
+
+    });
 
     it("fetches shapeSymbols array length", async () => {
       let length = await instance.getShapeSymbolsArrayLength();
@@ -204,9 +226,45 @@ contract("Shapes", accounts => {
       assert.isFalse(exists);
     });
 
-    xit("deactivates the CRC shape", async () => {});
+    it("deactivates the CRC shape", async () => {
+      // fetch the CRC Shape contract
+      let addressCRC = await instance.getShapeAddressBySymbol("CRC");
+      assert.isTrue(web3.utils.isAddress(addressCRC));
+      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
 
-    xit("re-activates the CRC shape", async () => {});
+      // check if the CRC shape is active
+      let shapeActive = await crcInstance.methods.isActive().call();
+      assert.isTrue(shapeActive);
+
+      let result = await instance.deactivateShape("CRC");
+      // Gas used: 22786
+      // console.log("Gas used (deactivate shape): " + result.receipt.gasUsed);
+
+      // check if the CRC shape is deactivated now
+      shapeActive = await crcInstance.methods.isActive().call();
+      assert.isFalse(shapeActive);
+    });
+
+    it("re-activates the CRC shape", async () => {
+      // fetch the CRC Shape contract
+      let addressCRC = await instance.getShapeAddressBySymbol("CRC");
+      assert.isTrue(web3.utils.isAddress(addressCRC));
+      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
+
+      // check if the CRC shape is inactive
+      let shapeActive = await crcInstance.methods.isActive().call();
+      assert.isFalse(shapeActive);
+
+      let result = await instance.reactivateShape("CRC");
+      // Gas used: 53634
+      // console.log("Gas used (reactivate shape): " + result.receipt.gasUsed);
+
+      // check if the CRC shape is reactivated now
+      shapeActive = await crcInstance.methods.isActive().call();
+      assert.isTrue(shapeActive);
+    });
 
     xit("allows the owner to collect ETH from a Shape contract", async () => {});
 

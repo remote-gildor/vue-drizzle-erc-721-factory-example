@@ -17,7 +17,7 @@ contract ShapeFactory is Ownable {
         revert("A ShapeType with this symbol already exists.");
       } else {
         // reactivate the shape
-        shapes[_symbol].reactivateShape();
+        shapes[_symbol].reactivate();
         return;
       }
     }
@@ -26,6 +26,19 @@ contract ShapeFactory is Ownable {
     Shape shape = new Shape(_name, _symbol, _price);
     shapes[_symbol] = shape;
     shapeSymbols.push(_symbol);
+  }
+
+  function deactivateShape(string memory _symbol) public onlyOwner {
+    if (address(shapes[_symbol]) != address(0)) {
+      // if not null, check if shape is active
+      if (shapes[_symbol].isActive()) {
+        // deactivate the shape
+        shapes[_symbol].deactivate();
+        return;
+      } else {
+        revert("The Shape is already inactive.");
+      }
+    }
   }
 
   function getShapeSymbolsArrayLength() public view returns (uint256) {
@@ -38,6 +51,19 @@ contract ShapeFactory is Ownable {
 
   function getShapeAddressBySymbol(string memory _symbol) public view returns (address) {
     return address(shapes[_symbol]);
+  }
+
+  function reactivateShape(string memory _symbol) public onlyOwner {
+    if (address(shapes[_symbol]) != address(0)) {
+      // if not null, check if shape is active
+      if (!shapes[_symbol].isActive()) {
+        // reactivate the shape
+        shapes[_symbol].reactivate();
+        return;
+      } else {
+        revert("The Shape is already active.");
+      }
+    }
   }
 }
 
@@ -63,6 +89,10 @@ contract Shape is ERC721, ERC721Burnable, Ownable {
   }
 
   // methods
+  function deactivate() public onlyOwner {
+    active = false;
+  }
+
   function exists(uint256 tokenId) public view returns (bool) {
     return super._exists(tokenId);
   }
@@ -86,7 +116,7 @@ contract Shape is ERC721, ERC721Burnable, Ownable {
     emit TokenMinted(msg.sender, super.symbol());
   }
 
-  function reactivateShape() public onlyOwner {
+  function reactivate() public onlyOwner {
     if (active == false) {
       active = true;
     }
