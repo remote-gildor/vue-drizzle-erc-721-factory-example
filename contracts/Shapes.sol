@@ -53,6 +53,11 @@ contract ShapeFactory is Ownable {
     return address(shapes[_symbol]);
   }
 
+  function ownerCollectEtherFromShape(string memory _symbol) public onlyOwner {
+    // ETH can be collected from only one Shape contract at a time
+    shapes[_symbol].ownerCollectEther(msg.sender);
+  }
+
   function reactivateShape(string memory _symbol) public onlyOwner {
     if (address(shapes[_symbol]) != address(0)) {
       // if not null, check if shape is active
@@ -114,6 +119,16 @@ contract Shape is ERC721, ERC721Burnable, Ownable {
     super._safeMint(msg.sender, lastId, _data);
 
     emit TokenMinted(msg.sender, super.symbol());
+  }
+
+  function ownerCollectEther(address receiver) public onlyOwner returns(bool) {
+    uint balance = address(this).balance;
+
+    (bool sent, ) = receiver.call{value: balance}("");
+
+    emit EtherCollected(receiver, balance);
+    
+    return sent;
   }
 
   function reactivate() public onlyOwner {

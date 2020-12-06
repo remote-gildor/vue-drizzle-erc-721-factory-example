@@ -68,7 +68,7 @@ contract("Shapes", accounts => {
       // fetch the CRC Shape contract
       let addressCRC = await instance.getShapeAddressBySymbol("CRC");
       assert.isTrue(web3.utils.isAddress(addressCRC));
-      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      assert.notEqual(addressCRC, constants.ZERO_ADDRESS);
       let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
 
       // check the CRC contract owner
@@ -100,7 +100,7 @@ contract("Shapes", accounts => {
     it("mints a new SQR token", async () => {
       let addressSQR = await instance.getShapeAddressBySymbol("SQR");
       assert.isTrue(web3.utils.isAddress(addressSQR));
-      assert.notEqual(addressSQR, 0x0000000000000000000000000000000000000000);
+      assert.notEqual(addressSQR, constants.ZERO_ADDRESS); // constants.ZERO_ADDRESS is 0x0000000000000000000000000000000000000000
       
       // fetch the Shape contract
       let sqrInstance = new web3.eth.Contract(shapeJson.abi, addressSQR);
@@ -115,7 +115,7 @@ contract("Shapes", accounts => {
 
       // mint an SQR token
       let result = await sqrInstance.methods.mint(
-        web3.utils.hexToBytes("0x0000000000000000000000000000000000000000")
+        web3.utils.hexToBytes(constants.ZERO_ADDRESS)
       ).send({
         from: accounts[0],
         gas: 300000,
@@ -133,7 +133,7 @@ contract("Shapes", accounts => {
     it("fetches the SQR token data (id etc.)", async () => {
       let addressSQR = await instance.getShapeAddressBySymbol("SQR");
       assert.isTrue(web3.utils.isAddress(addressSQR));
-      assert.notEqual(addressSQR, 0x0000000000000000000000000000000000000000);
+      assert.notEqual(addressSQR, constants.ZERO_ADDRESS);
       
       // fetch the Shape contract
       let sqrInstance = new web3.eth.Contract(shapeJson.abi, addressSQR);
@@ -160,7 +160,7 @@ contract("Shapes", accounts => {
     it("mints two new CRC tokens", async () => {
       let addressCRC = await instance.getShapeAddressBySymbol("CRC");
       assert.isTrue(web3.utils.isAddress(addressCRC));
-      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      assert.notEqual(addressCRC, constants.ZERO_ADDRESS);
       
       // fetch the CRC Shape contract
       let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
@@ -175,7 +175,7 @@ contract("Shapes", accounts => {
 
       // mint the first CRC token
       let result1 = await crcInstance.methods.mint(
-        web3.utils.hexToBytes("0x0000000000000000000000000000000000000000")
+        web3.utils.hexToBytes(constants.ZERO_ADDRESS)
       ).send({
         from: accounts[0],
         gas: 300000,
@@ -187,7 +187,7 @@ contract("Shapes", accounts => {
 
       // mint the second CRC token
       let result2 = await crcInstance.methods.mint(
-        web3.utils.hexToBytes("0x0000000000000000000000000000000000000000")
+        web3.utils.hexToBytes(constants.ZERO_ADDRESS)
       ).send({
         from: accounts[0],
         gas: 300000,
@@ -208,7 +208,7 @@ contract("Shapes", accounts => {
       // fetch the CRC Shape contract
       let addressCRC = await instance.getShapeAddressBySymbol("CRC");
       assert.isTrue(web3.utils.isAddress(addressCRC));
-      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      assert.notEqual(addressCRC, constants.ZERO_ADDRESS);
       let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
 
       // sanity check - token owner
@@ -230,7 +230,7 @@ contract("Shapes", accounts => {
       // fetch the CRC Shape contract
       let addressCRC = await instance.getShapeAddressBySymbol("CRC");
       assert.isTrue(web3.utils.isAddress(addressCRC));
-      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      assert.notEqual(addressCRC, constants.ZERO_ADDRESS);
       let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
 
       // check if the CRC shape is active
@@ -250,7 +250,7 @@ contract("Shapes", accounts => {
       // fetch the CRC Shape contract
       let addressCRC = await instance.getShapeAddressBySymbol("CRC");
       assert.isTrue(web3.utils.isAddress(addressCRC));
-      assert.notEqual(addressCRC, 0x0000000000000000000000000000000000000000);
+      assert.notEqual(addressCRC, constants.ZERO_ADDRESS);
       let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
 
       // check if the CRC shape is inactive
@@ -266,7 +266,41 @@ contract("Shapes", accounts => {
       assert.isTrue(shapeActive);
     });
 
-    xit("allows the owner to collect ETH from a Shape contract", async () => {});
+    it("allows the owner to collect ETH from a Shape contract", async () => {
+      // get the SQR shape contract address
+      let addressSQR = await instance.getShapeAddressBySymbol("SQR");
+      assert.isTrue(web3.utils.isAddress(addressSQR));
+      assert.notEqual(addressSQR, constants.ZERO_ADDRESS);
+
+      // check contract ETH balance before the collection
+      let contractEthBalanceBefore = await web3.eth.getBalance(addressSQR);
+      assert.equal(contractEthBalanceBefore, ether(1.2))
+
+      // check the user's ETH balance before the collection
+      let userEthBalanceBefore = await web3.eth.getBalance(accounts[0]);
+
+      // collect ETH
+      let result = await instance.ownerCollectEtherFromShape("SQR");
+
+      // gas used: 36191
+      // console.log("Gas used (ownerCollectEtherFromShape): " + result.receipt.gasUsed);
+      
+      // get gas price
+      const txData = await web3.eth.getTransaction(result.tx);
+      const gasPrice = txData.gasPrice;
+
+      // check contract ETH balance after the collection
+      let contractEthBalanceAfter = await web3.eth.getBalance(addressSQR);
+      assert.equal(contractEthBalanceAfter, 0);
+
+      // check the user's ETH balance after the collection
+      let userEthBalanceAfter = await web3.eth.getBalance(accounts[0]);
+
+      let diffEth = ether(1.2)-(result.receipt.gasUsed*gasPrice); // ETH returned minus gas fee
+      assert.approximately(Number(userEthBalanceBefore-userEthBalanceAfter), 
+                           Number(diffEth), 
+                           Number(10000000000000000000)); // error of margin in wei
+    });
 
     xit("fails at minting if value paid is incorrect", async () => {});
 
