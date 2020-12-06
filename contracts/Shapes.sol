@@ -38,6 +38,8 @@ contract ShapeFactory is Ownable {
       } else {
         revert("The Shape is already inactive.");
       }
+    } else {
+      revert("A Shape with this symbol does not exist.");
     }
   }
 
@@ -121,14 +123,15 @@ contract Shape is ERC721, ERC721Burnable, Ownable {
     emit TokenMinted(msg.sender, super.symbol());
   }
 
-  function ownerCollectEther(address receiver) public onlyOwner returns(bool) {
+  function ownerCollectEther(address receiver) public onlyOwner {
     uint balance = address(this).balance;
 
-    (bool sent, ) = receiver.call{value: balance}("");
+    (bool success, ) = receiver.call{value: balance}("");
+
+    if (!success)
+      revert("Collecting ETH was not successful.");
 
     emit EtherCollected(receiver, balance);
-    
-    return sent;
   }
 
   function reactivate() public onlyOwner {

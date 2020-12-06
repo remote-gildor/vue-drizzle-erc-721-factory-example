@@ -302,13 +302,71 @@ contract("Shapes", accounts => {
                            Number(10000000000000000000)); // error of margin in wei
     });
 
-    xit("fails at minting if value paid is incorrect", async () => {});
+    it("fails at minting if value paid is incorrect", async () => {
+      let addressSQR = await instance.getShapeAddressBySymbol("SQR");
+      assert.isTrue(web3.utils.isAddress(addressSQR));
+      assert.notEqual(addressSQR, constants.ZERO_ADDRESS); // constants.ZERO_ADDRESS is 0x0000000000000000000000000000000000000000
+      
+      // fetch the Shape contract
+      let sqrInstance = new web3.eth.Contract(shapeJson.abi, addressSQR);
 
-    xit("fails to burn a non-existing token (wrong ID)", async () => {});
+      // sanity check - shape name
+      let name = await sqrInstance.methods.name().call();
+      assert.equal(name, "square");
 
-    xit("fails at trying to create an existing active shape type", async () => {});
+      // check current balance of the user
+      let balanceBefore = await sqrInstance.methods.balanceOf(accounts[0]).call();
+      assert.equal(balanceBefore, 1); // 1 SQR was already minted before
+
+      // mint an SQR token
+      await expectRevert(
+        sqrInstance.methods.mint(
+          web3.utils.hexToBytes(constants.ZERO_ADDRESS)
+        ).send({
+          from: accounts[0],
+          gas: 300000,
+          value: ether(0.1) // too low ETH value
+        }),
+        "Wrong amount of ETH sent."
+      )
+
+      // check current balance of the user (should stay the same as before)
+      let balanceAfter = await sqrInstance.methods.balanceOf(accounts[0]).call();
+      assert.equal(balanceAfter, 1);
+    });
+
+    it("fails to burn a non-existing token (wrong ID)", async () => {
+      let tokenId = 45; // wrong token ID (non-existing)
+
+      // fetch the CRC Shape contract
+      let addressCRC = await instance.getShapeAddressBySymbol("CRC");
+      assert.isTrue(web3.utils.isAddress(addressCRC));
+      assert.notEqual(addressCRC, constants.ZERO_ADDRESS);
+      let crcInstance = new web3.eth.Contract(shapeJson.abi, addressCRC);
+
+      // burn the token (this will fail)
+      await expectRevert(
+        crcInstance.methods.burn(tokenId).send({
+          from: accounts[0],
+          gas: 300000
+        }),
+        "ERC721: operator query for nonexistent token"
+      )
+    });
+
+    it("fails at trying to create an existing active shape type", async () => {
+      await expectRevert(
+        instance.addNewShape("square", "SQR", ether(1.2)),
+        "A ShapeType with this symbol already exists."
+      );
+    });
     
-    xit("fails at deactivating a non-existing shape type", async () => {});
-
+    it("fails at deactivating a non-existing shape type", async () => {
+      await expectRevert(
+        instance.deactivateShape("LOL"), // a shape with this symbol does not exist
+        "A Shape with this symbol does not exist."
+      );
+    });
+      
   });
 });
